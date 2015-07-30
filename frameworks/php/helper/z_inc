@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+#@author wukezhan<wukezhan@gmail.com>
+
+function say()
+{
+    STR=$*
+    echo "${STR}"
+}
+function execute()
+{
+    CMD=$*
+    say "# ${CMD}"
+    ($*)
+}

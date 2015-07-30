@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+#@author wukezhan<wukezhan@gmail.com>
+
+__DIR__=`dirname $0`
+. "$__DIR__/z_inc"
+
+PHP=""
+TARGET=""
+OPT=""
+PREFIX=""
+CONF_SCAN_DIR=""
+
+function parse_args()
+{
+    if [ "$1" == "" ];then
+        say "usage: $0 php-version php-prefix-path --opts"
+        exit 1
+    fi
+    PHP=$1
+    TARGET=$2
+    if [[ "$2" =~ ^-- ]];then
+        TARGET="/server/php"
+        shift 1
+        OPT=$@
+    else
+        TARGET=$2
+        shift 2
+        OPT=$@
+    fi
+    CONF_SCAN_DIR="$TARGET/etc/conf.d"
+}
+
+parse_args $*
+
+say "START INSTALL '$PHP' TO '$TARGET'..."
+say "cd /tmp"
+cd /tmp
+if [ ! -d "$PHP" ];then
+    #execute "wget -O $PHP.tar.gz http://php.net/get/$PHP.tar.gz/from/this/mirror"
+    #execute "tar zxvf $PHP.tar.gz"
+    echo "error: dir not found"
+    exit 1
+fi
+if [ -d "$PHP" ];then
+    cd $PHP
+    execute "./configure --prefix=$TARGET --with-config-file-scan-dir=$CONF_SCAN_DIR $OPT"
+    execute "make"
+    execute "make install"
+    if [ ! -d "$CONF_SCAN_DIR" ]; then
+        execute "mkdir -p $CONF_SCAN_DIR"
+    fi
+    echo ""
+    exit
+fi
+
+say "ERROR!"
