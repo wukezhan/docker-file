@@ -1,0 +1,5 @@
+mkdir -p /data/conf /data/log
+if [ "$WWW_USER" != "" ]; then
+	echo "set $WWW_USER as nginx user"
+	sed -i -e "s/user www-data;/user $WWW_USER;/" /server/nginx/conf/nginx.conf
+fi

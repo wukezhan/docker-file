@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+#@author wukezhan<wukezhan@gmail.com>
+
+__DIR__=`dirname $0`
+. "$__DIR__/z_inc"
+
+TMP_DIR="/tmp/php-cache"
+if [ ! -d $TMP_DIR ]; then
+    execute "mkdir -p ${TMP_DIR}"
+fi
+EXT_PATH=""
+
+function parse_args()
+{
+    ACTION=$1
+    EXT_NAME=$2
+    PHP_PATH=$3
+    if [[ "$PHP_PATH" =~ ^-- ]] || [ -z "$PHP_PATH" ]; then
+        PHP_PATH="/server/php"
+    else
+        shift 3
+        EXT_OPT=$@
+    fi
+}
+
+function remove()
+{
+    if [ "$*" = "\/" ] || [ "$*" = "\/*" ] || [ "$*" = "" ];then
+        say "invalid path $*"
+    else
+        execute "rm -rf $*"
+    fi
+}
+function ext_get()
+{
+    EXT_NAME=$1
+    PECL_GET="wget -O $EXT_NAME.cache http://pecl.php.net/get/$EXT_NAME"
+    execute $PECL_GET
+    execute "tar zxvf $EXT_NAME.cache"
+}
+function ext_install()
+{
+    EXT_NAME=$1
+    if [ -d "$1" ];then
+        EXT_PATH=$1
+    else
+        EXT_DIR=`ls -d */|grep -i $EXT_NAME`
+        EXT_PATH="$TMP_DIR/$EXT_DIR"
+    fi
+
+    VERSION=`basename $2`
+    PHP_PATH=$2
+    say "start install $EXT_PATH into $VERSION@$PHP_PATH..."
+
+    say "cd $EXT_PATH"
+    cd $EXT_PATH
+    CONF_M4=`find . -name config.m4`
+    echo $CONF_M4
+    if [ "$CONF_M4" = "" ]; then
+        say "${Red}error ext path!"
+        exit 1
+    fi
+    EXT_PATH=`dirname ${CONF_M4}`
+    if [ "$EXT_PATH" != "." ]; then
+        say "cd $EXT_PATH"
+        cd $EXT_PATH
+    fi
+    execute "$PHP_PATH/bin/phpize"
+    execute "./configure --with-php-config=$PHP_PATH/bin/php-config $3"
+    execute "make"
+    execute "make install"
+    echo "extension=$EXT_NAME.so" > $PHP_PATH/etc/conf.d/$EXT_NAME.ini
+}
+
+function cache_remove()
+{
+    EXT_NAME=$1
+    execute "rm -f $EXT_NAME.cache"
+    CACHE_DIR=`ls -d */|grep ^$EXT_NAME`
+    remove $CACHE_DIR
+    say "$EXT_NAME is removed."
+}
+
+say "cd $TMP_DIR"
+cd $TMP_DIR
+
+parse_args $*
+
+case "$1" in
+    get)
+        if [ "" = "$ACTION" ]
+        then
+            say "error option"
+        else
+            ext_get $EXT_NAME
+        fi
+    ;;
+
+    install)
+        if [ "" = "$PHP_PATH" ];then
+            say "error option"
+        else
+            ext_install $EXT_NAME $PHP_PATH
+        fi
+    ;;
+
+    get-install)
+        if [ "" = "$PHP_PATH" ];then
+            say "error option"
+        else
+            ext_get $EXT_NAME
+            ext_install $EXT_NAME $PHP_PATH $EXT_OPT
+        fi
+    ;;
+
+    cache-remove)
+        if [ "" = "$ACTION" ];then
+            say "error option"
+        else
+            cache_remove $EXT_NAME
+        fi
+    ;;
+
+    *)
+    echo "Usage: $0 {get extension|install extension to-php-prefix|get-install extension to-php-prefix|cache-remove extension}"
+        exit 1
+    ;;
+
+esac
+

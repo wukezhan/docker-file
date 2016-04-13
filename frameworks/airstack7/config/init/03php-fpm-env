@@ -1,0 +1,6 @@
+mkdir -p /server/etc/php
+if [ "$WWW_USER" != "" ]; then
+	echo "set $WWW_USER as php-fpm user"
+	sed -i -e "s/www-data/$WWW_USER/" /server/php/etc/pool.d/default.conf
+fi
+/server/php/bin/php /server/php/script/build_env.php
