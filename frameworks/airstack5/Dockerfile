@@ -11,7 +11,7 @@ ENV LUAJIT_VERSION LuaJIT-2.0.3
 ENV NGINX_DEVKIT_VERSION 0.2.19
 ENV LUA_NGINX_VERSION 0.9.20rc3
 
-ENV PHP_VERSION php-7.0.1
+ENV PHP_VERSION php-5.6.16
 
 RUN apt-get update; \
 	apt-get install -y libpcre3-dev libssl-dev; \
@@ -40,7 +40,7 @@ RUN apt-get update; \
 	rm -rf /tmp/*
 
 ADD helper /tmp/helper
-ENV AIR_VERSION air-0.5.0-php7-alpha
+ENV AIR_VERSION air-0.5.0-php5-alpha
 RUN mkdir -p /tmp/php-cache; cd /tmp/php-cache; wget https://github.com/wukezhan/air/archive/${AIR_VERSION}.zip; unzip ${AIR_VERSION}.zip; \
 	mv air-${AIR_VERSION} ${AIR_VERSION}; ls -al; \
 	/tmp/helper/php-ext install air /server/php; \
